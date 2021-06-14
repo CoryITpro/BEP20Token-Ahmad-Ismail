@@ -780,7 +780,7 @@ contract SmileToken is Context, IBEP20, Ownable {
      * 4. Wallet Sell Limit: 1%
      */
     
-    address private _pancakeswapRouterAddress = 0x10ED43C718714eb63d5aA57B78B54704E256024E;
+    address private _pancakeswapRouterAddress = 0xD99D1c33F9fC3444f8101754aBC46c52416550D1;
     uint256 private _maxWallet = _tTotal / 10**2 * 1;
     uint256 private _maxSell = _tTotal / 10**2 * 1;
     uint256 private _maxBuy = _tTotal / 10**2 * 1;
@@ -1018,8 +1018,7 @@ contract SmileToken is Context, IBEP20, Ownable {
             recipient != pcsV2Pair
         ) {
             require (
-                balanceOf(tx.origin) + 
-                    amount <= _maxWallet,
+                _tOwned[recipient] + amount <= _maxWallet,
                     "Exceeds maximum wallet token amount"
             );
         } else if (
