@@ -1018,7 +1018,7 @@ contract SmileToken is Context, IBEP20, Ownable {
             recipient != pcsV2Pair
         ) {
             require (
-                _tOwned[recipient] + amount <= _maxWallet,
+                balanceOf(recipient) + amount <= _maxWallet,
                     "Exceeds maximum wallet token amount"
             );
         } else if (
